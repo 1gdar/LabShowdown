@@ -9,15 +9,15 @@ TagManager:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Post Processing
   - Water
   - UI
   - Floor
   - Player
   - Weapon
-  - 
-  - 
-  - 
+  - Bullet
+  - Respawn
+  - Test
   - 
   - 
   - 
@@ -39,9 +39,13 @@ TagManager:
   - 
   - 
   m_SortingLayers:
+  - name: Background
+    uniqueID: 1909807629
+    locked: 0
   - name: Default
     uniqueID: 0
     locked: 0
+<<<<<<< HEAD
   - name: Background
     uniqueID: 3328938305
     locked: 0
@@ -56,4 +60,11 @@ TagManager:
     locked: 0
   - name: Trees
     uniqueID: 1728895627
+=======
+  - name: Player
+    uniqueID: 3244526167
+    locked: 0
+  - name: Weapon
+    uniqueID: 3305433891
+>>>>>>> develop
     locked: 0

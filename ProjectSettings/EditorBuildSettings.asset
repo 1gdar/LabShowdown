@@ -6,9 +6,19 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+<<<<<<< HEAD
     path: Assets/_Main/Scenes/Menu.unity
     guid: 2cda990e2423bbf4892e6590ba056729
   - enabled: 1
     path: Assets/_Main/Scenes/DeathMatch/Level.unity
     guid: 398c3d50f7a5551468918779a6a32beb
   m_configObjects: {}
+=======
+    path: Assets/_Main/_SCENES/Menu.unity
+    guid: 22e33afc8d5e73e46a046c7af2623de2
+  - enabled: 1
+    path: Assets/_Main/_SCENES/Level.unity
+    guid: 398c3d50f7a5551468918779a6a32beb
+  m_configObjects:
+    com.unity.input.settings: {fileID: 11400000, guid: c9a8f8b0829f76542bbc0f6387d56db8, type: 2}
+>>>>>>> develop

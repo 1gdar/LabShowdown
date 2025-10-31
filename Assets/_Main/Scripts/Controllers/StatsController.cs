@@ -1,42 +1,99 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public class StatsController : MonoBehaviour
 {
     
    [SerializeField] private PlayerStats playerStats;
 
-    //TODO: [DUDA] PONER ESTAS VARIABLES ACA O LLAMARLAS DESDE EL PLAYER MODEL?
-    private float speed;
+    public float CurrentHealth { get; private set; }
 
-    private float jumpHeight;
+    private float maxHealth;
 
-    private float currentHealth;
+    private int lifes;
+
+    public bool ResetEffects { get; private set; }
+
+    private PlayerController playerController;
+    private PlayerView playerView;
+
+    public static event Action<int> OnDie;
+
+    public static event Action<int,int> OnLivesDecrese;
+
+    public static event Action<int,float,float> OnUpdateHealth;
+
+    public static event Action<int> OnRespawn;
+
+    [SerializeField] private ParticleSystem _psexplotion;
 
 
-    public float Speed { get => speed; set => speed = value; }
-    public float JumpHeight { get => jumpHeight; set => jumpHeight = value; }
+    public float Speed { get; set; }
+    public float JumpHeight { get; set; }
+
+    private void Awake()
+    {
+        playerController = GetComponent<PlayerController>();
+        playerView = GetComponent<PlayerView>();
+    }
 
     private void Start()
     {
-        currentHealth = playerStats.MaxHealth;
-        speed = playerStats.Speed;
-        jumpHeight = playerStats.JumpHeight;
+        CurrentHealth = playerStats.MaxHealth;
+        maxHealth = playerStats.MaxHealth;
+        Speed = playerStats.Speed;
+        JumpHeight = playerStats.JumpHeight;
+    }
+    private void Update()
+    {
+       
     }
     public void TakeDamage(float damage)
     {
-        currentHealth -= damage;
-        if (currentHealth <= 0)
+        ResetEffects = false;
+        CurrentHealth -= damage;
+        OnUpdateHealth?.Invoke(playerController.PlayerConfig.PlayerIndex, CurrentHealth, maxHealth);
+        playerView.Anim.SetTrigger("Hit");
+        if (CurrentHealth <= 0 && lifes == 1)
         {
-            currentHealth = 0;
+            CurrentHealth = 0;
             Die();
+            OnDie?.Invoke(playerController.PlayerConfig.PlayerIndex);
         }
+        if (CurrentHealth <= 0 && lifes > 0)
+        {
+            var temp = Instantiate(_psexplotion, transform.position, Quaternion.identity);
+            Destroy(temp.gameObject, 1f); //TODO
+            AudioManager.Instance.Play("die");
+            ResetEffects = true;
+            lifes--;
+            OnLivesDecrese?.Invoke(playerController.PlayerConfig.PlayerIndex, lifes);
+            CurrentHealth = maxHealth;
+            OnUpdateHealth?.Invoke(playerController.PlayerConfig.PlayerIndex, CurrentHealth, maxHealth);
+            OnRespawn?.Invoke(playerController.PlayerConfig.PlayerIndex);
+
+        }
+
 
     }
     public void Die()
     {
+
         print($"Die {gameObject.name}");
         Destroy(gameObject);
     }
+
+    public float SetSpeedPercentage(float percentage)
+    {
+        Speed = Speed * (percentage * 0.01f);
+        return Speed;
+    }
+
+    public void SetLifes(int lifes)
+    {
+        this.lifes = lifes;
+    }
+
 }

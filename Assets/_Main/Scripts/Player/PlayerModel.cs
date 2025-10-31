@@ -2,12 +2,25 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-
 public class PlayerModel : MonoBehaviour
 {
+
+    private bool cancelledJump;
+    private Transform weaponPrefab;
+   
+    [SerializeField] private int speedYWallSlide; //TODO: pasarlo a stats
+    [SerializeField] private int speedYFalling; //TODO: pasarlo a stats
+
     [SerializeField] private LayerMask floor;
 
+<<<<<<< HEAD
     [SerializeField] private float coyoteTimeSet = 0.25f;
+=======
+    [SerializeField] private float coyoteTimeSet;
+    [SerializeField] private float fallMultiplier;
+    [SerializeField] private float jumpMultiplier;
+    [SerializeField] private float jumpTime;
+>>>>>>> develop
 
     [SerializeField] private float inputBufferTimeSet= 0.25f;
 
@@ -15,100 +28,192 @@ public class PlayerModel : MonoBehaviour
 
     [SerializeField] private Transform arm;
 
-
     [SerializeField] private Transform dropPosition;
+
+<<<<<<< HEAD
+    private Queue<string> inputBuffer = new Queue<string>();
+=======
+    [SerializeField] private float raycastHorizontalDistance;
+>>>>>>> develop
+
+    [SerializeField] private float raycastFloorDistance;
+
+    [SerializeField] private Transform floorOffset;
+
+    [SerializeField] private Transform hitOffsetLeft;
+
+    [SerializeField] private Transform hitOffsetRight;
+
+    private bool weaponReady;
 
     private Queue<string> inputBuffer = new Queue<string>();
 
-    private Rigidbody2D rb;
-
     private RaycastHit2D floorRaycast;
-    private RaycastHit2D sideUpRaycast;
-    private RaycastHit2D sideBackRaycast;
-    private bool canFalling;
-
-    [SerializeField] private float raycastHitDistance;
-    [SerializeField] private float raycastFloorDistance;
-
+    private RaycastHit2D sideLeftRaycast;
+    private RaycastHit2D sideRightRaycast;
     private float coyoteTime;
-
+    private float jumpCounter;
     private bool alreadyJumped;
 
-    private IWeapon weapon;
+    private Vector2 gravity;
 
     private StatsController statsController;
+    private Rigidbody2D rb;
+    private SpriteRenderer spriteRenderer;
+    private PlayerView playerView;
+    private Fists fists;
 
-    [SerializeField] private Transform floorOffset;
-    [SerializeField] private Transform hitOffsetUp;
-    [SerializeField] private Transform hitOffsetBack;
-    private Vector3 directionRaycast;
+
+    public IWeapon Weapon { get; private set; }
+
+    public bool AlreadyJumped { get => alreadyJumped;  set => alreadyJumped = value; }
+
 
     private void Awake()
     {
-
+        spriteRenderer = GetComponent<SpriteRenderer>();
         statsController = GetComponent<StatsController>();
-
         rb = GetComponent<Rigidbody2D>();
+        playerView = GetComponent<PlayerView>();
+        fists = GetComponentInChildren<Fists>();
     }
 
+<<<<<<< HEAD
+=======
+    private void Start()
+    {
+        gravity = new Vector3(0, -Physics2D.gravity.y);
+        Weapon = null;
+    }
+
+    private void Update()
+    {
+        
+    }
+
+>>>>>>> develop
     public void Raycasts()
     {
         floorRaycast = Physics2D.Raycast(floorOffset.position, Vector2.down, raycastFloorDistance, floor);
-        sideUpRaycast = Physics2D.Raycast(hitOffsetUp.position, Vector2.left, raycastHitDistance, floor);
-        sideBackRaycast = Physics2D.Raycast(hitOffsetBack.position, Vector2.left, raycastHitDistance, floor);
+        sideRightRaycast = Physics2D.Raycast(hitOffsetRight.position, Vector2.down, raycastHorizontalDistance , floor);
+        sideLeftRaycast = Physics2D.Raycast(hitOffsetLeft.position, Vector2.down, raycastHorizontalDistance , floor);
     }
 
     public void Movement(float x)
     {
-        if (!sideUpRaycast && !sideBackRaycast)
+        
+        if (!sideRightRaycast && !sideLeftRaycast)
+        {
             rb.velocity = new Vector3(x * statsController.Speed, rb.velocity.y, 0f);
+            playerView.Anim.SetFloat("Speed", x);
+            AudioManager.Instance.Play("running");
+
+        }
+       
+        //if(!floorRaycast && !alreadyJumped && !sideLeftRaycast && !sideRightRaycast)
+        //{
+        //    rb.velocity = new Vector3(rb.velocity.x, speedYFalling, 0f);
+            
+        //}
+        //if (sideLeftRaycast && !alreadyJumped || sideRightRaycast && !alreadyJumped)
+        //{ 
+        //    rb.velocity = new Vector3(x * statsController.Speed, speedYWallSlide, 0f);
+        //}
 
         if (x < 0)
         {
-            raycastHitDistance = 0.6f;
             var ang = transform.rotation.eulerAngles;
             ang.y = 180;
             transform.rotation = Quaternion.Euler(ang);
+            playerView.Anim.SetFloat("Speed", -x);
+            AudioManager.Instance.Play("running");
+
         }
         if (x > 0)
         {
-            raycastHitDistance = -0.6f;
-            directionRaycast = Vector2.left;
             var ang = transform.rotation.eulerAngles;
             ang.y = 0;
             transform.rotation = Quaternion.Euler(ang);
+           
         }
 
+        
+      
     }
 
-    public void Jump()
+    public void Jump(float x)
     {
-        
-        if (floorRaycast == true)
+        //TODO: REWORK JUMP
+        if ((floorRaycast == true || sideRightRaycast && !floorRaycast || sideLeftRaycast && !floorRaycast) && alreadyJumped == false)
         {
+            
             if (inputBuffer.Count > 0)
             {
                 if (inputBuffer.Peek() == "jump")
                 {
-                    rb.velocity = new Vector3(rb.velocity.x, statsController.JumpHeight, 0f);
-                    inputBuffer.Dequeue();
-                    alreadyJumped = true;
-                }
-            }
-        }
-        else if (inputBuffer.Count > 0)
-        {
-            if (inputBuffer.Peek() == "jump")
-            {
-                if (coyoteTime < coyoteTimeSet && alreadyJumped == false)
-                {
-                    alreadyJumped = true;
-                    rb.velocity = new Vector3(rb.velocity.x, statsController.JumpHeight, 0f);
-                    inputBuffer.Dequeue();
-                }
-            }
-        }
+                    if (!sideLeftRaycast && !sideRightRaycast)
+                    {
+                        rb.velocity = new Vector3(rb.velocity.x, statsController.JumpHeight, 0f);
+                        inputBuffer.Dequeue();
+                        alreadyJumped = true;
+                        jumpCounter = 0;
+                        AudioManager.Instance.Play("jump");
+                        return;
+                    }
+                    if (coyoteTime < coyoteTimeSet && alreadyJumped == false)
+                    {
+                        if (!sideLeftRaycast && !sideRightRaycast)
+                        {
+                            rb.velocity = new Vector3(rb.velocity.x, statsController.JumpHeight, 0f);
+                        }
+                        inputBuffer.Dequeue();
+                        alreadyJumped = true;
+                        jumpCounter = 0;
+                        AudioManager.Instance.Play("jump");
 
+                    }
+
+
+
+                }
+
+            }
+        }     
+    }
+    //public void CancelledJump()
+    //{
+    //    cancelledJump = true;
+    //    if (rb.velocity.y > 0 && !sideLeftRaycast && !sideRightRaycast)
+    //    {
+    //        rb.velocity = new Vector3(rb.velocity.x, speedYFalling, 0f);
+          
+    //    }         
+    //}
+
+    public void VariableJump()
+    {
+        if (rb.velocity.y > 0 && alreadyJumped)
+        {
+            jumpCounter += Time.deltaTime;
+            if (jumpCounter > jumpTime) alreadyJumped = false;
+
+            float t = jumpCounter / jumpTime;
+            float currentJumpM = jumpMultiplier;
+
+            if (t > 0.5f)
+            {
+                currentJumpM = jumpMultiplier * (1 - t);
+            }
+
+            rb.velocity += gravity * currentJumpM * Time.deltaTime;
+        }
+    }
+    public void FallingSpeedIncrease()
+    {
+        if (rb.velocity.y < 0)
+        {
+            rb.velocity -= fallMultiplier * Time.deltaTime * gravity;
+        }
     }
 
     public void JumpQueue()
@@ -127,29 +232,57 @@ public class PlayerModel : MonoBehaviour
         arm.Rotate(0, 0, -90f, Space.Self);
     }
 
-    public void Attack()
+    public void Attack(float input)
     {
-        if (weapon != null)
+        if (Weapon != null && input > 0 && (weaponReady == true || Weapon.IsFullAuto == true))
         {
-            weapon.Attack();
+            Weapon.Attack();
+            weaponReady = false;
+
+            if (Weapon.Ammo <= 0)
+            {
+                print("si");
+                Weapon.DestroyWeapon();
+                WeaponIsNull();
+            }
         }
+
+        if (Weapon != null && input < 1)
+        {
+            weaponReady = true;
+        }
+
+        if (Weapon == null && input > 0) 
+        {
+            fists.Attack();
+            
+        }
+    }
+    public void WeaponIsNull()
+    {
+        //gameObject.layer = 7;
+        fists.OffRenderFists(true);
+        Weapon = null;
+      
        
     }
     public void DropWeapon()
     {
-        if (weapon != null)
+        if (Weapon != null)
         {
-            gameObject.layer = 7; //vuelve a tener la layer "player" 
-            weapon.Transform.SetParent(null);
-            weapon.Transform.position = dropPosition.transform.position;
-            weapon.Collider2D.enabled = true;
-            weapon.Rigidbody2D.isKinematic = false;
-            weapon.Rigidbody2D.simulated = true;
-            weapon = null;
-
+            fists.OffRenderFists(true);
+            ////TODO: layer 7 es "player" 
+            Weapon._Transform.SetParent(null);
+            Weapon._Transform.position = dropPosition.transform.position;
+            Weapon._Collider2D.enabled = true;
+            Weapon.Rigidbody2D.isKinematic = false;
+            Weapon.Rigidbody2D.simulated = true;
+            Weapon._SpriteRenderer.sortingLayerName = "Weapon";
+            WeaponIsNull();
+            
         }
     }
-     
+ 
     public void Timer()
     {
         if (floorRaycast == true)
@@ -161,6 +294,8 @@ public class PlayerModel : MonoBehaviour
             coyoteTime += Time.deltaTime;
         }
     }
+
+
     private void RemoveInput()
     {
         if (inputBuffer.Count > 0)
@@ -177,50 +312,67 @@ public class PlayerModel : MonoBehaviour
 
         if (collision.gameObject.layer == 6)
         {
+           
             alreadyJumped = false;
             coyoteTime = 0;
         }
-        else
-        {
-            canFalling = true;
-        }
+
 
     }
-
-   
-
-    private void OnTriggerStay2D(Collider2D collision)
+    private void OnCollisionStay2D(Collision2D collision)
     {
-        if(collision.gameObject.layer == 8)
-        { 
-            weapon = collision.GetComponent<IWeapon>();          
-            GrabWeapon();     
+        //if (hand.childCount >= 1)//TODO: CAMBIAR MAS ADELANTE
+        //{
+        //    gameObject.layer = default; 
+        //}
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        Debug.Log("Colisione contra algo");
+        if (Weapon == null && collision.gameObject.layer == 8)
+        {
+            Debug.Log("Colisione con el arma");
+            Weapon = collision.GetComponent<IWeapon>();
+            collision.GetComponent<Collider2D>().enabled = false;
+            var rigid = collision.GetComponent<Rigidbody2D>();
+            rigid.isKinematic = true;
+            rigid.simulated = false;
+            rigid.velocity = Vector2.zero;
+            collision.gameObject.GetComponent<SpriteRenderer>().sortingLayerName = "Player";
+            collision.gameObject.GetComponent<SpriteRenderer>().sortingOrder = 2;
+            weaponPrefab = collision.GetComponent<Transform>();
+            GrabWeapon();
         }
 
+
+
+        //if(collision.gameObject.layer == 6)
+        //{
+        //    Instantiate(dust, transform.position, dust.transform.rotation);
+        //}
+    }
+
+
+    private void GrabWeapon()
+    {
+        Debug.Log("Agarre el arma");
+        fists.OffRenderFists(false);
+        spriteRenderer.sortingOrder = 1;
+        weaponPrefab.position = hand.position;
+        weaponPrefab.rotation = hand.rotation;
+        weaponPrefab.SetParent(hand);
+        
+        
     }
 
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.cyan;
+        Gizmos.color = Color.red;
         Gizmos.DrawRay(floorOffset.position, Vector2.down * raycastFloorDistance);
-        Gizmos.DrawRay(hitOffsetUp.position, Vector2.left * raycastHitDistance);
-        Gizmos.DrawRay(hitOffsetBack.position, Vector2.left * raycastHitDistance);
+        Gizmos.DrawRay(hitOffsetRight.position, Vector2.down * raycastHorizontalDistance);
+        Gizmos.DrawRay(hitOffsetLeft.position, Vector2.down * raycastHorizontalDistance);
     }
 
-    private void GrabWeapon()
-    {
-        weapon.Transform.position = hand.position;
-        weapon.Transform.rotation = hand.rotation;
-        weapon.Transform.SetParent(hand);
-        weapon.Collider2D.enabled = false;
-        weapon.Rigidbody2D.isKinematic = true;
-        weapon.Rigidbody2D.simulated = false;
-        weapon.Rigidbody2D.velocity = Vector3.zero;
-        gameObject.layer = default; // setiamos la layer en default para que traspase las armas
-                                    // y no choque contra ellas si hay problemas con esto agregar otra layer
-
-    }
-
-
-
+   
 }
